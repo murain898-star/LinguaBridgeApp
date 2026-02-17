@@ -35,6 +35,10 @@ export interface Message {
   isEncrypted?: boolean;
   encryptedOriginal?: string; // JSON of EncryptedPackage
   encryptedTranslated?: string; // JSON of EncryptedPackage
+
+  // New features
+  type?: 'text' | 'voice';
+  reactions?: Record<string, string>; // userId -> emoji
 }
 
 export interface UserProfile {

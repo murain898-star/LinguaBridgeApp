@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { UserProfile, Message } from '../types';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Globe, Volume2, Wifi } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Globe, Volume2, Wifi, Info } from 'lucide-react';
 import { translateText } from '../services/geminiService';
 import { startSpeechRecognition, speakText } from '../utils/speechUtils';
 
@@ -25,11 +25,14 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentUser, remoteUser, onEndCal
   const [cameraOn, setCameraOn] = useState(isVideoEnabled);
   const [isProcessing, setIsProcessing] = useState(false);
   const [callStatus, setCallStatus] = useState<'CONNECTING' | 'CONNECTED'>('CONNECTING');
+  const [notification, setNotification] = useState<string | null>(null);
   
   // Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  
+  // Fix: Use ReturnType<typeof setTimeout> instead of NodeJS.Timeout which may not be available in browser types
+  const notificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Initialize Camera & Stream
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -74,8 +77,21 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentUser, remoteUser, onEndCal
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+      if (notificationTimeoutRef.current) {
+          clearTimeout(notificationTimeoutRef.current);
+      }
     };
   }, []);
+
+  const showNotification = (msg: string) => {
+      setNotification(msg);
+      if (notificationTimeoutRef.current) {
+          clearTimeout(notificationTimeoutRef.current);
+      }
+      notificationTimeoutRef.current = setTimeout(() => {
+          setNotification(null);
+      }, 3000);
+  };
 
   // Handle Camera Toggle
   const toggleCamera = () => {
@@ -93,8 +109,10 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentUser, remoteUser, onEndCal
     if (localStream) {
       const audioTrack = localStream.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = !isMuted; // Toggle: if currently muted (true), new state is unmuted (true)
-        setIsMuted(!isMuted);
+        const newMutedState = !isMuted;
+        audioTrack.enabled = !newMutedState; 
+        setIsMuted(newMutedState);
+        showNotification(newMutedState ? 'You muted the microphone' : 'Microphone active');
       }
     }
   };
@@ -147,6 +165,16 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentUser, remoteUser, onEndCal
   return (
     <div className="flex flex-col h-screen bg-dark text-white overflow-hidden relative">
       
+      {/* Notification Banner */}
+      {notification && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in-down">
+              <div className="bg-gray-800/90 backdrop-blur-md text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-gray-600">
+                  <Info size={16} className="text-primary" />
+                  <span className="text-sm font-medium">{notification}</span>
+              </div>
+          </div>
+      )}
+
       {/* Main Content Area - Split View */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-1 p-2 md:p-4">
         
