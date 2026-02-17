@@ -53,7 +53,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       if (isValid) {
         const exists = userService.checkUserExists(phoneNumber);
         if (exists) {
-           const user = userService.loginOrRegister(phoneNumber);
+           const user = await userService.loginOrRegister(phoneNumber);
            onLogin(user);
         } else {
            setStep('DETAILS');
@@ -68,18 +68,21 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setError('Please enter your name');
       return;
     }
-
+    
+    setIsLoading(true);
     try {
-      const user = userService.loginOrRegister(phoneNumber, name, selectedLang);
+      const user = await userService.loginOrRegister(phoneNumber, name, selectedLang);
       onLogin(user);
     } catch (err) {
       setError('Registration failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -208,9 +211,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center"
             >
-              Create Account
+              {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Create Account'}
             </button>
           </form>
         )}

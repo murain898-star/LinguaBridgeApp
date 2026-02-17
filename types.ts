@@ -17,12 +17,24 @@ export interface UserConfig {
   language: Language;
 }
 
+export interface EncryptedPackage {
+  iv: string;
+  content: string;
+  keys: Record<string, string>; // map userId -> encrypted session key
+}
+
 export interface Message {
   id: string;
-  senderId: string; // Changed from 'userA' | 'userB' to generic ID
+  senderId: string;
+  // Legacy fields kept for compatibility but optional if encrypted
   originalText: string;
   translatedText: string;
   timestamp: number;
+  
+  // E2EE fields
+  isEncrypted?: boolean;
+  encryptedOriginal?: string; // JSON of EncryptedPackage
+  encryptedTranslated?: string; // JSON of EncryptedPackage
 }
 
 export interface UserProfile {
@@ -31,7 +43,9 @@ export interface UserProfile {
   name: string;
   language: Language;
   avatar?: string;
-  status?: string; // Text status
+  status?: string;
+  publicKey?: string; // JWK string
+  isOnline?: boolean;
 }
 
 export interface Short {
