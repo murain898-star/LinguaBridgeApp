@@ -1,0 +1,8 @@
+{
+  "name": "LinguaBridgeApp",
+  "description": "A real-time voice, video, and chat calling application that automatically translates conversations between users speaking different languages using Gemini AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
